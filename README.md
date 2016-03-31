@@ -16,13 +16,13 @@ furthermore vim needs to be compiled with python support.
 The confluence credentials used to access the wiki need to reside in
 the .netrc file in your homedirectory and should look like
 
-machine confluence.<YOURDOMAIN>
+machine <YOURDOMAIN>
 login <USERNAME>
 password <PASSWORD>
 
 the url of the confluence instance itself should be added to your .vimrc file like
 
-let g:confluence_url= 'https://confluence.<YOURDOMAIN>'
+let g:confluence_url= 'https://<YOURDOMAIN>/rest/api/content'
 
 Install the extension by copying the plugin to the .vim/plugin folder
 
