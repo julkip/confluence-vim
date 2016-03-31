@@ -11,7 +11,7 @@ endif
 " Vim comments start with a double quote.
 " Function definition is VimL. We can mix VimL and Python in
 " function definition.
-function! OpenConfluencePage(article_name)
+function! OpenConfluencePage(url)
 " We start the python code like the next line.
 
 python << EOF
@@ -19,15 +19,17 @@ python << EOF
 import json
 import html2text
 import requests
+import re
 import vim
 
 cb = vim.current.buffer
 
-article_name = vim.eval("a:article_name")
-article_name = article_name[article_name.find("//")+2:]
-
-r = requests.get('https://openedx.atlassian.net/wiki/rest/api/content', params={'spaceKey': '~ali', 'title': article_name, 'status': 'current', 'expand': 'body.view,version.number', 'limit': 1})
-#vim.command("echom \"%s\"" % "\\\"".join(repr(r.text).split("\"")))
+instance = vim.eval("g:confluence_url")
+url = vim.eval("a:url")
+matchObj = re.match( r'conf://(.*?)/(.*)', url, re.M|re.I)
+space_name=matchObj.group(1)
+article_name=matchObj.group(2)
+r = requests.get(instance , params={'spaceKey': space_name, 'title': article_name, 'status': 'current', 'expand': 'body.view,version.number', 'limit': 1})
 resp = json.loads(r.text)['results']
 if len(resp) > 0:
     vim.command("let b:confid = %d" % int(resp[0]['id']))
@@ -37,7 +39,7 @@ if len(resp) > 0:
     h = html2text.HTML2Text()
     h.body_width = 0
     article_markdown = h.handle(article)
-    
+
     del cb[:]
     for line in article_markdown.split('\n'):
         cb.append(line.encode('utf8'))
@@ -52,27 +54,30 @@ EOF
 " Here the python code is closed. We can continue writing VimL or python again.
 endfunction
 
-function! WriteConfluencePage(article_name)
+function! WriteConfluencePage(url)
 python << EOF
 import json
 import markdown
 import requests
+import re
 import vim
 
 cb = vim.current.buffer
-
-article_name = vim.eval("a:article_name")
-article_name = article_name[article_name.find("//")+2:]
+instance = vim.eval("g:confluence_url")
+url = vim.eval("a:url")
+matchObj = re.match( r'conf://(.*?)/(.*)', url, re.M|re.I)
+space_name=matchObj.group(1)
+article_name=matchObj.group(2)
 article_id = int(vim.eval("b:confid"))
 article_v = int(vim.eval("b:confv")) + 1
 article_content = markdown.markdown("\n".join(cb))
 
 if article_id > 0:
-    jj = {"id": str(article_id), "title": article_name, "type": "page", "space": { "key": "~ali" }, "version": { "number": article_v }, "body": { "storage": { "value": article_content, "representation": "storage" } } }
-    r = requests.put('https://openedx.atlassian.net/wiki/rest/api/content/%d' % article_id, json=jj)
+    jj = {"id": str(article_id), "title": article_name, "type": "page", "space": { "key": space_name }, "version": { "number": article_v }, "body": { "storage": { "value": article_content, "representation": "storage" } } }
+    r = requests.put(instance + '%d' % article_id, json=jj)
 else:
-    jj = {"type": "page", "space": {"key": "~ali"}, "title": article_name, "body": {"storage": {"value": article_content, "representation": "storage"}}}
-    r = requests.post('https://openedx.atlassian.net/wiki/rest/api/content', params={'spaceKey': '~ali', 'title': article_name}, json=jj)
+    jj = {"type": "page", "space": {"key": space_name}, "title": article_name, "body": {"storage": {"value": article_content, "representation": "storage"}}}
+    r = requests.post(instance, params={'spaceKey': space_name, 'title': article_name}, json=jj)
 #vim.command("echom \"%s\"" % "\\\"".join(repr(r.text).split("\"")))
 resp = json.loads(r.text)
 vim.command("let b:confid = %d" % int(resp['id']))
@@ -84,6 +89,6 @@ endfunction
 
 augroup Confluence
   au!
-  au BufReadCmd conf://* call OpenConfluencePage(expand("<amatch>"))
-  au BufWriteCmd conf://* call WriteConfluencePage(expand("<amatch>"))
+  au BufReadCmd conf://*  call OpenConfluencePage(expand("<amatch>"))
+  au BufWriteCmd conf://*  call WriteConfluencePage(expand("<amatch>"))
 augroup END
