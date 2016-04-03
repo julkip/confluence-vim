@@ -44,7 +44,7 @@ by using
 ```
 vi conf://<SPACE>/<PAGE1>/<...>/<PAGEX>
 ```
-![Nested entries](docs/confluence.png)
+![Nested entries](doc/confluence.png)
 An overview of the available markup tags in confluence can be found at
 https://confluence.atlassian.com/doc/confluence-wiki-markup-251003035.html
 
