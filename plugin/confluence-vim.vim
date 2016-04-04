@@ -93,11 +93,11 @@ if article_id > 0:
 else:
   jj = {"type": "page", "space": {"key": space_name}, "title": article_name, "ancestors": [{"id": parent_pageid }], "body": {"storage": {"value": article_content, "representation": "storage"}}}
   r = requests.post('%s' % instance, data=json.dumps(jj), verify=True, headers={"content-type":"application/json"})
-  resp = json.loads(r.text)
-  vim.command("let b:confid = %d" % int(resp['id']))
-  vim.command("let b:confv = %d" % int(resp['version']['number']))
-  vim.command("let &modified = 0")
-  vim.command("echo \"Confluence entry %s written.\"" % article_name)
+resp = json.loads(r.text)
+vim.command("let b:confid = %d" % int(resp['id']))
+vim.command("let b:confv = %d" % int(resp['version']['number']))
+vim.command("let &modified = 0")
+vim.command("echo \"Confluence entry %s written.\"" % article_name)
 EOF
 endfunction
 
